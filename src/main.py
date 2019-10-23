@@ -37,11 +37,11 @@ if __name__ == '__main__':
 
     # check the action to be accomplished
     if action == 'r':
-        pass
+        print("Renaming files action in directory: ", directory)
     elif action == 'u':
-        pass
+        print("unrenaming files action in directory: ", directory)
     elif action == 'm':
-        pass
+        print("Mix-renaming files action in directory: ", directory)
     else:
         print("ERROR: wrong flags")
         #return 1
