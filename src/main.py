@@ -2,13 +2,74 @@
 # -*- coding: utf-8 -*-
 
 import sys
+from os.path import exists, isfile
+from os import listdir, rename
+import hashlib
+import random
+import string
+import math
+import json
+
 
 DEBUG = False
+ORIGINAL_NAMES = ".original_names.json"
+MIN_NAME_SIZE = 4
+
+
+# generate random names
+def random_names(total_names, name_size, random_formats):
+    """Generate a random string of fixed length """
+    letters = string. ascii_letters
+    numbers = string.digits
+
+    generated_random_names = set()
+
+    while len(generated_random_names) < total_names:
+        if random_formats == 'l':
+            current_name =  ''.join(random.choice(letters) for i in range(name_size))
+        elif random_formats == 'n':
+            current_name = ''.join(random.choice(numbers) for i in range(name_size))
+        else:
+            current_name =  ''.join(random.choice(letters + numbers) for i in range(name_size))
+
+        if current_name not in generated_random_names:
+            generated_random_names.add(current_name)
+
+    return generated_random_names
 
 
 # give random names and save original names to a file
-def rename(this_directory, this_format):
+def rename_files(this_directory, this_format):
     print("Renaming files in directory: ", this_directory, " with format: ", this_format)
+    list_of_files = listdir(this_directory)
+    total_files = len(list_of_files)
+    # print(list_of_files)
+
+    if not exists(this_directory+ORIGINAL_NAMES):
+
+        translation_dict = {}
+        for file in list_of_files:
+            if not isfile(this_directory+file):
+                continue
+            hash_value = hashlib.sha256(open(this_directory+file,'rb').read()).hexdigest()
+            translation_dict[hash_value] = this_directory+file
+
+        json_translation = json.dumps(translation_dict)
+        f = open(this_directory+ORIGINAL_NAMES, "w")
+        f.write(json_translation)
+        f.close()
+
+    new_names = random_names(total_files, max(MIN_NAME_SIZE, math.ceil(math.log(total_files, 10))), this_format)
+    # print(list_of_files, new_names)
+
+    for file, newName in zip(list_of_files, new_names):
+        if not isfile(this_directory + file) or file == 'main.py' or file == this_directory+ORIGINAL_NAMES:
+            continue
+        else:
+            extension = file.split('.')[-1] if '.' in file else ''
+            rename(r''+this_directory+file, r''+this_directory+newName+'.'+extension)
+
+    # print(list_of_files)
 
 
 # remove given random names
@@ -44,7 +105,7 @@ if __name__ == '__main__':
     # n: numbers | a:alphanumeric | l:letters
     possible_format = {'n', 'a', 'l'}
 
-    directory = '.'
+    directory = './'
     action = 'r'
     rand_format = 'a'
 
@@ -61,6 +122,9 @@ if __name__ == '__main__':
                 print("Checking for flag: ", each_flag)
             if check_flag(each_flag) == 'dir':
                 directory = each_flag
+                if not exists(directory) or isfile(directory):
+                    print("%s" % directory, " is not a valid directory!")
+                    exit(3)
             elif check_flag(each_flag) == 'fa':
                 for char in each_flag[1:]:
                     if char in possible_action:
@@ -77,7 +141,7 @@ if __name__ == '__main__':
 
     # check the action to be accomplished
     if action == 'r':
-        rename(directory, rand_format)
+        rename_files(directory, rand_format)
 
     elif action == 'u':
         undo_rename(directory, rand_format)
