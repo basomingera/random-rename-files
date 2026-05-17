@@ -1,22 +1,66 @@
 # random-rename-files
-This Python3 script gives random names to files within a folder and creates a text file to keep track of previous names.
-Imagine having a music car player without random play option .... one way to deal with it is to give the files random names every time they are being put on a USB stick.
-# DESCRIPTION
-The intentinon for this project is to make a command-line program to rename files with random names fo different formats. It will require the Python interpreter version 3.2+ and it will not be platform specific.
 
-    python3 main.py [directory] [-options] 
-    e.g: python3 main.py ../ -ra (rename files in upper directory with alphanumeric random names)
-# OPTIONS
-Options are in 2 types: actions and formats
+This Python 3 script gives random names to files within a folder and writes a JSON mapping file so you can restore the original names later.
 
-> Actions (default: r)
+Imagine having a music car player without a random-play option: one way to deal with it is to give the files random names every time they are copied to a USB stick.
 
-    r: rename the files in the given directory
-    u: undo random renaming of files in the given directory. This requires the presence of a files that kept the changes from original file names
-    m: mix random names with the origina mames
-    
-> Formats (default a)
+## Requirements
 
-    n: give numeric random names
-    a: give alphanumeric random names
-    l: give only random names with letters ( no number)
+- Python 3.8+ (uses `pathlib` and modern type hints)
+- No third-party dependencies
+
+## Usage
+
+```text
+python src/main.py [directory] [-options] [--dry-run] [--debug]
+```
+
+Examples:
+
+```text
+python src/main.py ../ -ra
+python src/main.py -u
+python src/main.py . -m --dry-run
+```
+
+## Options
+
+Options are two types: **actions** and **formats**. Combine them in one flag group (e.g. `-ra`, `-ul`).
+
+### Actions (default: `r`)
+
+| Flag | Description |
+|------|-------------|
+| `r` | Rename files to random names |
+| `u` | Undo renaming using `.original_names.json` |
+| `m` | Mix naming: prepend a random token to each original filename |
+
+### Formats (default: `a`)
+
+| Flag | Description |
+|------|-------------|
+| `n` | Numeric random names |
+| `a` | Alphanumeric random names |
+| `l` | Letters only |
+
+### Extra flags
+
+| Flag | Description |
+|------|-------------|
+| `--dry-run` | Show planned renames without changing files |
+| `--debug` | Verbose logging |
+
+## Mapping file
+
+Renaming and mix-naming create `.original_names.json` in the target directory. It stores a SHA-256 hash of each file’s contents mapped to its original basename, so undo works even after files are renamed.
+
+Run undo (`-u`) before renaming again. A second rename without undo is rejected to avoid losing track of original names.
+
+See [CHANGELOG.md](CHANGELOG.md) for version history.
+
+## Tests
+
+```text
+pip install pytest
+pytest
+```
